@@ -1,0 +1,865 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI та Веб-сервіси - Каталог інструментів</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInDown 1s ease-out;
+        }
+
+        header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        .search-container {
+            text-align: center;
+            margin: 30px 0;
+            animation: fadeIn 1s ease-out 0.6s both;
+        }
+
+        .search-box {
+            padding: 15px 25px;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            animation: fadeIn 1s ease-out 0.9s both;
+        }
+
+        .category-btn {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .category-btn:hover, .category-btn.active {
+            background: rgba(255,255,255,0.3);
+            border-color: rgba(255,255,255,0.6);
+            transform: translateY(-2px);
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+        }
+
+        .service-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .service-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.2);
+        }
+
+        .service-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .service-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-right: 15px;
+            color: white;
+        }
+
+        .service-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .service-description {
+            color: #4a5568;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .service-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .service-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .category-tag {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .service-card {
+                margin: 10px;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 0;
+            color: rgba(255,255,255,0.8);
+            margin-top: 60px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 AI та Веб-сервіси</h1>
+            <p>Каталог найкращих інструментів для творчості та продуктивності</p>
+        </header>
+
+        <div class="search-container">
+            <input type="text" class="search-box" placeholder="🔍 Пошук сервісів..." id="searchInput">
+        </div>
+
+        <div class="categories">
+            <button class="category-btn active" data-category="all">Усі</button>
+            <button class="category-btn" data-category="image">Зображення</button>
+            <button class="category-btn" data-category="video">Відео</button>
+            <button class="category-btn" data-category="text">Текст</button>
+            <button class="category-btn" data-category="audio">Аудіо</button>
+            <button class="category-btn" data-category="productivity">Продуктивність</button>
+            <button class="category-btn" data-category="web">Веб-інструменти</button>
+        </div>
+
+        <div class="services-grid" id="servicesGrid">
+            <!-- Сервіси генерації зображень -->
+            <div class="service-card" data-category="image">
+                <div class="category-tag">Зображення</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #ff6b6b, #ee5a24);">🎨</div>
+                    <div>
+                        <div class="service-title">Krea.ai</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Потужний інструмент на основі ШІ для створення унікальних зображень. Тепер може генерувати відео! Нова модель Flux генерує зображення надвисокої якості.
+                </div>
+                <a href="https://www.krea.ai/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="image">
+                <div class="category-tag">Зображення</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #4ecdc4, #44a08d);">🖼️</div>
+                    <div>
+                        <div class="service-title">DALLE-4K</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Генерація високоякісних зображень у роздільній здатності 4K за допомогою штучного інтелекту. Створює деталізовані та реалістичні зображення.
+                </div>
+                <a href="https://huggingface.co/spaces/mukaist/DALLE-4K" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="image">
+                <div class="category-tag">Зображення</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #a8edea, #fed6e3);">⚡</div>
+                    <div>
+                        <div class="service-title">Blinkshot.io</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Швидкий генератор зображень на базі FLUX. Працює в режимі генерації в реальному часі. Безкоштовний сервіс з підтримкою англійських промптів.
+                </div>
+                <a href="https://blinkshot.io/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="image">
+                <div class="category-tag">Зображення</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #ffecd2, #fcb69f);">🎭</div>
+                    <div>
+                        <div class="service-title">Raphael.app</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Спеціалізований інструмент для генерації зображень з акцентом на художність та креативність.
+                </div>
+                <a href="https://raphael.app/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <!-- Відео сервіси -->
+            <div class="service-card" data-category="video">
+                <div class="category-tag">Відео</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">🎬</div>
+                    <div>
+                        <div class="service-title">Hailuo.ai</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Платформа для автоматичної генерації та редагування відео за допомогою ШІ. Спрощує процес виробництва відео завдяки автоматизації монтажу та ефектів.
+                </div>
+                <a href="https://hailuo.ai/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="video">
+                <div class="category-tag">Відео</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);">📹</div>
+                    <div>
+                        <div class="service-title">Vidu.studio</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Онлайн-платформа для автоматизації відеомаркетингу. Швидко створює персоналізовані відео та генерує сценарії під конкретні аудиторії.
+                </div>
+                <a href="https://vidu.studio/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="video">
+                <div class="category-tag">Відео</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #a18cd1, #fbc2eb);">🎥</div>
+                    <div>
+                        <div class="service-title">InVideo AI</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Платформа для створення та редагування відео за допомогою ШІ. Автоматично генерує відеоконтент на основі текстових сценаріїв.
+                </div>
+                <a href="https://invideo.io/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="video">
+                <div class="category-tag">Відео</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #fd79a8, #e84393);">📱</div>
+                    <div>
+                        <div class="service-title">VEED.io</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Створення готових відео та історій за допомогою ШІ. Автоматично підбирає відеоряд, озвучує та додає фонову музику.
+                </div>
+                <a href="https://www.veed.io/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <!-- Аудіо сервіси -->
+            <div class="service-card" data-category="audio">
+                <div class="category-tag">Аудіо</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #74b9ff, #0984e3);">🎤</div>
+                    <div>
+                        <div class="service-title">Whisper Large V3 Turbo</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Модель ШІ для автоматичної транскрибації аудіо в текст. Підтримує кілька мов та швидко конвертує аудіозаписи у текст.
+                </div>
+                <a href="https://huggingface.co/spaces/hf-audio/whisper-large-v3-turbo" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="audio">
+                <div class="category-tag">Аудіо</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #00cec9, #55a3ff);">🔊</div>
+                    <div>
+                        <div class="service-title">Riverside.fm</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Онлайн-платформа для транскрибації відео- та аудіоконтенту. Автоматично конвертує записані матеріали в текстові транскрипти з високою точністю.
+                </div>
+                <a href="https://riverside.fm/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="audio">
+                <div class="category-tag">Аудіо</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe);">🎵</div>
+                    <div>
+                        <div class="service-title">Auphonic</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Сервіс для автоматизованої постпродакшн обробки аудіо. Використовує ШІ для балансування гучності, видалення шумів та нормалізації.
+                </div>
+                <a href="https://auphonic.com/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <!-- Текстові інструменти -->
+            <div class="service-card" data-category="text">
+                <div class="category-tag">Текст</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #00b894, #00cec9);">📝</div>
+                    <div>
+                        <div class="service-title">Twee.com</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Онлайн-платформа для створення текстових історій та інтерактивних оповідань. Дозволяє розробляти завдання різного типу за текстами, аудіо та відео.
+                </div>
+                <a href="https://twee.com/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="text">
+                <div class="category-tag">Текст</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #fdcb6e, #e84393);">✍️</div>
+                    <div>
+                        <div class="service-title">i2Text</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Безкоштовний сервіс для обробки тексту з широким спектром інструментів: підрахунок слів, перевірка граматики, перефразування та генерація тексту за допомогою ШІ.
+                </div>
+                <a href="https://www.i2text.com/uk" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <!-- Продуктивність -->
+            <div class="service-card" data-category="productivity">
+                <div class="category-tag">Продуктивність</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #74b9ff, #0984e3);">📋</div>
+                    <div>
+                        <div class="service-title">Napkin.ai</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Простий інструмент для швидкого створення нотаток та візуальних схем. Дозволяє організовувати ідеї у вигляді діаграм з можливістю редагування та спільного доступу.
+                </div>
+                <a href="https://napkin.ai/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="productivity">
+                <div class="category-tag">Продуктивність</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #00cec9, #55a3ff);">🎯</div>
+                    <div>
+                        <div class="service-title">Miro</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Онлайн-платформа для командної роботи з інтерактивними дошками для мозкового штурму, планування та візуалізації ідей. Ідеально для спільної роботи в реальному часі.
+                </div>
+                <a href="https://miro.com/app/dashboard/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="productivity">
+                <div class="category-tag">Продуктивність</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #a29bfe, #6c5ce7);">🤖</div>
+                    <div>
+                        <div class="service-title">OverallGPT</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Універсальний інструмент на основі ШІ для автоматизації різних завдань. Надає можливість використовувати відразу декілька нейронних мереж.
+                </div>
+                <a href="https://overallgpt.com/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="productivity">
+                <div class="category-tag">Продуктивність</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #fd79a8, #fdcb6e);">📊</div>
+                    <div>
+                        <div class="service-title">Slidesgo AI</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Онлайн-інструмент для створення презентацій за допомогою ШІ. Автоматично генерує слайди з візуально привабливим дизайном і структурою.
+                </div>
+                <a href="https://slidesgo.com/ai-presentations" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <!-- Веб-інструменти -->
+            <div class="service-card" data-category="web">
+                <div class="category-tag">Веб-інструменти</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #00b894, #55efc4);">🌐</div>
+                    <div>
+                        <div class="service-title">CroxyProxy</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Шифрований проксі, доступний прямо в браузері. Забезпечує мінімальну конфіденційність з SSL шифруванням трафіку та приховуванням IP.
+                </div>
+                <a href="https://www.croxyproxy.com/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="web">
+                <div class="category-tag">Веб-інструменти</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #e17055, #fab1a0);">🌍</div>
+                    <div>
+                        <div class="service-title">Browserling</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Онлайн-платформа для кросбраузерного тестування веб-сайтів в різних браузерах без необхідності їх встановлення на комп'ютері.
+                </div>
+                <a href="https://www.browserling.com/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="web">
+                <div class="category-tag">Веб-інструменти</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #74b9ff, #0984e3);">🎨</div>
+                    <div>
+                        <div class="service-title">tldraw</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Безкоштовний онлайн-інструмент для створення спільних цифрових дощок для малювання з нескінченним полотном та підтримкою спільної роботи.
+                </div>
+                <a href="https://www.tldraw.com/" class="service-link">Відвідати сайт</a>
+            </div>
+
+            <div class="service-card" data-category="web">
+                <div class="category-tag">Веб-інструменти</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: linear-gradient(135deg, #fd79a8, #e84393);">📁</div>
+                    <div>
+                        <div class="service-title">Sejda PDF Editor</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    Онлайн-сервіс для редагування PDF-файлів. Дозволяє додавати текст, зображення, підписи, а також виконувати злиття, розділення та конвертацію документів.
+                </div>
+                <a href="https://www.sejda.com/pdf-editor" class="service-link">Відвідати сайт</a>
+            </div>
+        </div>
+
+        <footer>
+            <p>🌟 Зібрано найкращі AI та веб-інструменти для вашої продуктивності</p>
+        </footer>
+    </div>
+
+    <script>
+        // Пошук по сервісах
+        const searchInput = document.getElementById('searchInput');
+        const serviceCards = document.querySelectorAll('.service-card');
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        const servicesGrid = document.getElementById('servicesGrid');
+
+        // Оновлена функція пошуку
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            
+            serviceCards.forEach(card => {
+                const title = card.querySelector('.service-title').textContent.toLowerCase();
+                const description = card.querySelector('.service-description').textContent.toLowerCase();
+                const category = card.dataset.category;
+                const activeCategory = document.querySelector('.category-btn.active').dataset.category;
+
+                const matchesSearch = title.includes(searchTerm) || description.includes(searchTerm);
+                const matchesCategory = activeCategory === 'all' || category === activeCategory;
+
+                card.style.display = (matchesSearch && matchesCategory) ? 'block' : 'none';
+            });
+        });
+
+        // Оновлена фільтрація по категоріях
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const category = this.dataset.category;
+                
+                // Оновлення активної кнопки
+                categoryButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Фільтрація карток
+                serviceCards.forEach(card => {
+                    const cardCategory = card.dataset.category;
+                    const searchTerm = searchInput.value.toLowerCase().trim();
+                    const title = card.querySelector('.service-title').textContent.toLowerCase();
+                    const description = card.querySelector('.service-description').textContent.toLowerCase();
+                    const matchesSearch = !searchTerm || title.includes(searchTerm) || description.includes(searchTerm);
+
+                    card.style.display = (category === 'all' || cardCategory === category) && matchesSearch ? 'block' : 'none';
+                });
+            });
+        });
+
+        // Анімація появи карток
+        const animateCards = () => {
+            serviceCards.forEach((card, index) => {
+                if (card.style.display !== 'none') {
+                    setTimeout(() => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(50px)';
+                        card.style.transition = 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+                        
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, 100);
+                    }, index * 100);
+                }
+            });
+        };
+
+        window.addEventListener('load', animateCards);
+
+        // Додавання додаткових сервісів
+        const additionalServices = [
+            {
+                title: "MovaFlag",
+                category: "productivity",
+                icon: "🇺🇦",
+                description: "Open source програма для Windows від українського розробника. Постійно нагадує, яка мова зараз ввімкнена на клавіатурі біля курсора.",
+                link: "https://github.com/Z-beam/MovaFlag/releases/tag/1.0.0",
+                gradient: "linear-gradient(135deg, #0057b7, #ffd700)"
+            },
+            {
+                title: "Unlisted Videos",
+                category: "web",
+                icon: "📹",
+                description: "Сервіс для пошуку та перегляду YouTube відео, які доступні тільки за посиланням. Не вимагає реєстрації.",
+                link: "https://unlistedvideos.com/",
+                gradient: "linear-gradient(135deg, #ff0000, #cc0000)"
+            },
+            {
+                title: "QuestionWell",
+                category: "text",
+                icon: "❓",
+                description: "Інструмент для створення тестів на основі тексту. Простий у використанні сервіс для освітніх цілей.",
+                link: "https://questionwell.org/",
+                gradient: "linear-gradient(135deg, #4CAF50, #45a049)"
+            },
+            {
+                title: "Conker AI",
+                category: "text",
+                icon: "📋",
+                description: "Створення тестів та онлайн-квізів за допомогою штучного інтелекту. Підтримує різні формати питань.",
+                link: "https://app.conker.ai/",
+                gradient: "linear-gradient(135deg, #9c27b0, #673ab7)"
+            },
+            {
+                title: "Browser.lol",
+                category: "web",
+                icon: "🔒",
+                description: "Віртуальний браузер для безпечного відвідування заблокованих або потенційно небезпечних сайтів в ізольованому середовищі.",
+                link: "https://browser.lol/",
+                gradient: "linear-gradient(135deg, #607d8b, #455a64)"
+            },
+            {
+                title: "Pebblely",
+                category: "image",
+                icon: "🛍️",
+                description: "Створення професійного фону для ваших продуктів та товарів за допомогою ШІ. Ідеально для e-commerce.",
+                link: "https://app.pebblely.com/create",
+                gradient: "linear-gradient(135deg, #ff5722, #e64a19)"
+            },
+            {
+                title: "Minimax TTS",
+                category: "audio",
+                icon: "🗣️",
+                description: "Перетворення тексту в мову за допомогою штучного інтелекту. Якісне озвучування голосом ШІ.",
+                link: "https://www.minimax.io/audio/text-to-speech",
+                gradient: "linear-gradient(135deg, #2196f3, #1976d2)"
+            },
+            {
+                title: "Grok",
+                category: "text",
+                icon: "🧠",
+                description: "AI-помічник від xAI для надання відповідей на різні питання з максимальною правдивістю. Включає пошук в реальному часі та генерацію зображень.",
+                link: "https://grok.com",
+                gradient: "linear-gradient(135deg, #000000, #333333)"
+            },
+            {
+                title: "Slidespeak",
+                category: "productivity",
+                icon: "🎤",
+                description: "Платформа для генерації презентацій за допомогою ШІ. Автоматично створює структуру, дизайн та наповнення слайдів.",
+                link: "https://slidespeak.co/",
+                gradient: "linear-gradient(135deg, #ff9800, #f57c00)"
+            },
+            {
+                title: "Diffusers Fast Inpaint",
+                category: "image",
+                icon: "🖌️",
+                description: "Швидке редагування зображень за допомогою інтелектуального зафарбовування. Видаляє або змінює частини зображень.",
+                link: "https://huggingface.co/spaces/OzzyGT/diffusers-fast-inpaint",
+                gradient: "linear-gradient(135deg, #e91e63, #c2185b)"
+            },
+            {
+                title: "Image Outpaint",
+                category: "image",
+                icon: "🖼️",
+                description: "Розширення меж зображень за допомогою ШІ. Додає нові елементи поза рамками існуючого зображення.",
+                link: "https://huggingface.co/spaces/fffiloni/diffusers-image-outpaint",
+                gradient: "linear-gradient(135deg, #795548, #5d4037)"
+            },
+            {
+                title: "Finegrain Image Enhancer",
+                category: "image",
+                icon: "✨",
+                description: "Покращення якості зображень за допомогою ШІ. Підвищує роздільну здатність та коригує деталі.",
+                link: "https://huggingface.co/spaces/finegrain/finegrain-image-enhancer",
+                gradient: "linear-gradient(135deg, #00bcd4, #0097a7)"
+            }
+        ];
+
+        // Додавання додаткових сервісів до сітки
+        additionalServices.forEach(service => {
+            const serviceCard = document.createElement('div');
+            serviceCard.className = 'service-card';
+            serviceCard.setAttribute('data-category', service.category);
+            
+            serviceCard.innerHTML = `
+                <div class="category-tag">${getCategoryName(service.category)}</div>
+                <div class="service-header">
+                    <div class="service-icon" style="background: ${service.gradient};">${service.icon}</div>
+                    <div>
+                        <div class="service-title">${service.title}</div>
+                    </div>
+                </div>
+                <div class="service-description">
+                    ${service.description}
+                </div>
+                <a href="${service.link}" class="service-link">Відвідати сайт</a>
+            `;
+            
+            servicesGrid.appendChild(serviceCard);
+        });
+
+        function getCategoryName(category) {
+            const categoryNames = {
+                'image': 'Зображення',
+                'video': 'Відео',
+                'text': 'Текст',
+                'audio': 'Аудіо',
+                'productivity': 'Продуктивність',
+                'web': 'Веб-інструменти'
+            };
+            return categoryNames[category] || 'Інше';
+        }
+
+        // Оновлення лічильника після додавання нових сервісів
+        const updateCounter = () => {
+            const totalServices = document.querySelectorAll('.service-card').length;
+            const counterElement = document.querySelector('.services-counter') || document.createElement('div');
+            counterElement.className = 'services-counter';
+            counterElement.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(255,255,255,0.9);
+                padding: 10px 15px;
+                border-radius: 25px;
+                font-weight: 600;
+                color: #333;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+                backdrop-filter: blur(10px);
+                z-index: 1000;
+            `;
+            counterElement.innerHTML = `📊 ${totalServices} сервіси від інформатика для вас!`;
+            if (!counterElement.parentNode) {
+                document.body.appendChild(counterElement);
+            }
+        };
+
+        // Додавання ефекту паралакса для заголовка
+        window.addEventListener('scroll', function() {
+            const scrolled = window.pageYOffset;
+            const header = document.querySelector('header');
+            const rate = scrolled * -0.5;
+            header.style.transform = `translateY(${rate}px)`;
+        });
+
+        // Ініціалізація після додавання нових сервісів
+        const init = () => {
+            updateCounter();
+            // Оновлення serviceCards після додавання нових елементів
+            const newServiceCards = document.querySelectorAll('.service-card');
+            newServiceCards.forEach(card => {
+                if (!card.hasListener) {
+                    card.hasListener = true;
+                    // Додаткові слухачі подій, якщо потрібні
+                }
+            });
+            animateCards();
+        };
+
+        init();
+    </script>
+</body>
+</html>
